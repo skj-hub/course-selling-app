@@ -1,18 +1,47 @@
 const { Router } = require("express");
 const adminRouter = Router();
 const {adminModel} = require("../db");
+const jwt = require("jsonwebtoken");
+require("dotenv").config();
+const JWT_ADMIN_PASSWORD = process.env.JWT_ADMIN_TOKEN;
 
+adminRouter.post("/signup", async function(req, res){
+    const { email, password, firstName, lastName } = req.body;
 
-adminRouter.post("/signup", function(req, res){
+    await adminModel.create({
+        email : email,
+        password : password,
+        firstName : firstName,
+        lastName : lastName
+    })
+
     res.json({
-        message: "signup endpoint"
-    })    
+        message: "Signup succeeded"
+    })      
 })
 
-adminRouter.post("/signin", function(req, res){
-    res.json({
-        message: "signin endpoint"
-    })    
+adminRouter.post("/signin", async function(req, res){
+    const { email, password } = req.body;
+
+    const admin = await adminModel.findOne({
+        email: email,
+        password: password
+    });
+
+    if(admin){
+        const token = jwt.sign({
+            id: admin._id
+        }, JWT_ADMIN_PASSWORD);
+
+        res.json({
+            token: token
+        })
+    }
+    else{
+        res.status(403).json({
+            message: "Incorrect credentials"
+        })
+    }      
 })
 
 adminRouter.post("/course", function(req, res){
