@@ -2,8 +2,8 @@ const { Router } = require("express");
 const userRouter = Router();
 const { userModel } = require("../db");
 const jwt = require("jsonwebtoken");
-require("dotenv").config();
-const JWT_USER_PASSWORD = process.env.JWT_USER_TOKEN;
+const { JWT_USER_PASSWORD } = require("../config")
+
 
 
 userRouter.post("/signup", async function(req, res){
