@@ -1,27 +1,28 @@
 const { Router } = require("express");
 const userRouter = Router();
-const { userModel } = require("../db");
+const { userModel, purchaseModel, courseModel } = require("../db");
 const jwt = require("jsonwebtoken");
 const { JWT_USER_PASSWORD } = require("../config")
+const { userMiddleware } = require("../middleware/user")
 
 
 
-userRouter.post("/signup", async function(req, res){
+userRouter.post("/signup", async function (req, res) {
     const { email, password, firstName, lastName } = req.body;
 
     await userModel.create({
-        email : email,
-        password : password,
-        firstName : firstName,
-        lastName : lastName
+        email: email,
+        password: password,
+        firstName: firstName,
+        lastName: lastName
     })
 
     res.json({
         message: "Signup succeeded"
-    })    
+    })
 })
 
-userRouter.post("/signin", async function(req, res){
+userRouter.post("/signin", async function (req, res) {
 
     const { email, password } = req.body;
 
@@ -30,7 +31,7 @@ userRouter.post("/signin", async function(req, res){
         password: password
     });
 
-    if(user){
+    if (user) {
         const token = jwt.sign({
             id: user._id
         }, JWT_USER_PASSWORD);
@@ -39,19 +40,30 @@ userRouter.post("/signin", async function(req, res){
             token: token
         })
     }
-    else{
+    else {
         res.status(403).json({
             message: "Incorrect credentials"
         })
-    }    
+    }
 })
 
-userRouter.get("/purchases", function(req, res){
+userRouter.get("/purchases", userMiddleware, async function (req, res) {
+    const userId = req.userId;
+
+    const purchases = await purchaseModel.find({
+        userId
+    })
+
+    const coursesData = await courseModel.find({
+        _id: { $in : purchases.map(x => x.courseId)}
+    })
+
     res.json({
-        message: "signin endpoint"
-    })    
+        purchases,
+        coursesData
+    })
 })
 
 module.exports = {
-    userRouter : userRouter
+    userRouter: userRouter
 }
